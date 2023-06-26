@@ -1,0 +1,153 @@
+@font-face{
+    font-family: "setoFont";
+    src: url(font/setofont.woff2) format("woff2");
+}
+@font-face{
+    font-family: "showcard";
+    src: url(font/ShowcardGothic.woff2) format("woff2");
+}
+
+* {
+    font-family: "setoFont";
+}
+
+html {
+    background-image: url(../img/mizutama.webp)
+}
+
+#ranking {
+    background-image: url(../img/fukidasi.webp);
+    background-size: auto 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin: 0;
+    padding-top: 48px;
+    padding-bottom: 48px;
+    text-align: center;
+    font-size: 3rem;
+    font-family: "showcard";
+}
+
+.slider-container {
+    position: relative;
+    width: auto;
+    height: 200px;
+    margin: 0 auto;
+    margin-bottom: 40px;
+    overflow: hidden;
+}
+  
+.slider-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: auto;
+    height: 100%;
+    display: none;
+    transform: translate(-50%, -50%) scale(0.5);
+    transform-origin: top center;
+}
+  
+.slider-image.active {
+    display: block;
+}
+  
+.slider-controls {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1;
+    transform: translateY(-50%);
+}
+  
+.slider-button {
+    font-size: 24px;
+    padding: 10px 16px;
+    margin: 0 10px;
+    background-color: rgb(183, 253, 255);
+    border: none;
+    color: #000000;
+    cursor: pointer;
+    border-radius: 50%;
+    opacity: 0.8;
+}
+
+.box_2 {
+    display: block;
+}
+
+.centered-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding-bottom: 20px;
+    margin: auto;
+}
+
+.button-container button {
+    margin: 0 -4px;
+    background-color: #ccc;
+    font-size: 24px;
+    padding: 10px 16px;
+    border: none;
+}
+
+.button-container button.active {
+    background-color: rgb(177, 177, 177);
+    color: #000000;
+    font-size: 24px;
+    padding: 10px 16px;
+    border: none;
+}
+
+.ranking {
+    margin:0;
+    width: 100%;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+}
+
+table {
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    width: 320px;
+    background-color: rgb(177, 177, 177);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    padding-top:20px;
+    padding-bottom:20px;
+}
+
+tbody {
+    background-color: rgb(255, 255, 255);
+}
+
+th,td {
+    border: 3px solid gray;
+}
+
+.hidden {
+    display: none;
+}
+
+#button1 {
+    border-top-left-radius: 20px;
+    width:160px;
+}
+
+#button2 {
+    border-top-right-radius: 20px;
+    width:160px;
+}
+
+footer {
+    background-color: rgb(6, 183, 124);
+    width: 100%;
+}

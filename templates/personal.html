@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <title>Personal Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <header>
+        <img src="static\img\rogo_font.png">
+    </header>
+    
+    {% if not game_played %}
+        <div class="container">
+            <p>現在 <b>{{ points }}</b> ポイントです！</p>
+            <p>ゲームボタンを押したら始まります！</p>
+        </div>
+        <form method="POST" onsubmit="return confirmGameStart()" style="display: flex;">
+            <input type="submit" name="gamestart" value="Game Start" style="font-family:showcard;">
+        </form>
+    {% else %}
+        <div class="container">
+            <p><b>{{ points }}</b> ポイント獲得しました！</p>
+            <p>お疲れ様でした！</p>
+        </div>
+    {% endif %}
+
+    <div id="table">
+        <table>
+            <tbody>
+                <caption style="margin:10px">Points Ranking</caption><br>
+            <tr>
+                <th>順位</th>
+                <th>プレイヤー</th>
+                <th>ポイント</th>
+            </tr>
+            {% for user in ranking %}
+                <tr>
+                    <td>{{ user.rank }}位</td>
+                    <td>{{ user.nickname }}</td>
+                    <td>{{ user.points }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+		function confirmGameStart() {
+			var confirmation = confirm("本当にゲームを始めますか？");
+			
+			if (confirmation) {
+				window.location.href = "/game?username={{ username }}";
+				return true;
+			} else {
+				window.location.href = "/personal?user={{ username }}";
+				return false;
+			}
+		}
+	</script>
+
+</body>
+</html>

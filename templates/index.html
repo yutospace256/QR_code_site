@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja" style="padding:0;">
+  <head>
+    <meta charset="utf-8">
+    <title>QR Code Poonts</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      /* Style for the loading screen */
+      #loading-screen {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: #f0f0f0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+      }
+    </style>
+  </head>
+ <body>
+    <div id="loading-screen">
+        <h1>Loading...</h1>
+    </div>
+    <script>
+      window.addEventListener('load', function() {
+          // When the page is fully loaded, hide the loading screen
+          document.getElementById('loading-screen').style.display = 'none';
+      });
+    </script>
+    <header>
+      <img src="static\img\rogo_font.png">
+    </header>
+    <div class="container">
+      <p>初めての方や二回目以降の方は<br>左の「遊ぶボタン」<br>記録を見たい人は<br>右の「記録ボタン」<br>を押してください</p>
+      <form action="/" method="POST">
+        <div class="buttons">
+          <input type="submit" name="signin" value="遊ぶ">
+          <input type="submit" name="login" value="記録">
+        </div>
+      </form>
+    </div>
+    <img src="../static/img/char/kyuawan.webp" style="width:100%; height:auto;">
+  </body>
+</html>

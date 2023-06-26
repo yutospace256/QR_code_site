@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Sign In</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      /* Style for the loading screen */
+      #loading-screen {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: #f0f0f0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+      }
+    </style>
+  </head>
+ <body>
+    <div id="loading-screen">
+        <h1>Loading...</h1>
+    </div>
+    <script>
+      window.addEventListener('load', function() {
+          // When the page is fully loaded, hide the loading screen
+          document.getElementById('loading-screen').style.display = 'none';
+      });
+    </script>
+    <header>
+      <img src="static\img\rogo_font.png">
+    </header>
+    <div class="container">
+      <p>「<b>{{ username }}</b>」 を下に入力してください！<br>ニックネームも入力してください！</p>
+      <form action="/signin" method="POST" style="display:block;">
+        <input type="text" name="username" placeholder="四桁の数(半角)" required>
+        <input type="text" name="nickname" placeholder="ニックネーム(10文字以内)" required>
+        <input type="submit" value="Next">
+      </form>      
+      {% if error %}
+        <p class="error">{{ error }}</p>
+      {% endif %}
+    </div>
+  </body>
+</html>

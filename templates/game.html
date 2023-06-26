@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<title>Game Page</title>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        /* Style for the loading screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+      </style>
+    </head>
+   <body>
+      <div id="loading-screen">
+          <h1>Loading...</h1>
+      </div>
+      <script>
+        window.addEventListener('load', function() {
+            // When the page is fully loaded, hide the loading screen
+            document.getElementById('loading-screen').style.display = 'none';
+        });
+      </script>
+	<header>
+		<img src="static\img\rogo_font.png">
+	</header>
+	<div class="container">
+		<p id="game-message">{{ message }}</p>
+		<p>現在 <b>{{ points }}</b> ポイント！</p>
+		{% if time_sec > 0 and time_sec < 421 %}
+		<p class="time">残り<span id="min"></span>分<span id="sec"></span>秒</p>
+		<Script>
+			var time = {{ time_sec }};
+			function doReload() {
+				window.location.reload();
+			}
+			window.addEventListener('load', function () {
+			setTimeout(doReload, time*1000 + 2000);
+			});
+		</Script>
+		<script src="{{ url_for('static', filename='js/time.js') }}"></script>
+		{% endif %}	
+        {% if remaining_time > timedelta() %}
+			<button id="launch-camera">カメラを起動！</button>
+			<video id="qr-video" autoplay></video>
+		{% endif %}
+		{% if timedelta() > remaining_time %}
+			<button id="quit-game">ゲームを終了する</button>
+		{% endif %}
+        <p id="qr-result"></p>
+		<div class="log-section">
+            <p>≪記録≫</p>
+            {% for log_entry in log_list %}  
+                <p>{{ log_entry.username }} <b>{{ log_entry.points }} points gained in {{ log_entry.site_number }}！ {{ log_entry.time }}</b></p>
+            {% endfor %}
+        </div>
+	</div>
+	<script src="{{ url_for('static', filename='js/jsQR.js') }}"></script>
+	<script>
+		var video = document.getElementById("qr-video");
+		var launchCameraBtn = document.getElementById("launch-camera");
+		var qrResult = document.getElementById("qr-result");
+		var front = false;
+		var stream;
+	
+		// Launch or stop the camera when the "Launch Camera" button is clicked
+		launchCameraBtn.addEventListener("click", function() {
+			if (!stream) {
+				// Get the media stream from the back camera
+				navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+					.then(function(s) {
+						stream = s;
+						video.srcObject = stream;
+						video.play();
+					})
+					.catch(function(error) {
+						console.error("Unable to access the camera: " + error);
+					});
+			} else {
+				// Stop the current camera stream
+				stream.getTracks().forEach(function(track) {
+					track.stop();
+				});
+				stream = null;
+				video.srcObject = null;
+			}
+		});
+	
+		// Continuously capture images from the camera and decode the QR code
+		setInterval(function() {
+		if (stream) {
+			// Get the image data from the video element
+			var canvas = document.createElement("canvas");
+			canvas.width = video.videoWidth;
+			canvas.height = video.videoHeight;
+			canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+			var imageData = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
+
+			// Decode the QR code from the image data
+			var qrCode = jsQR(imageData.data, imageData.width, imageData.height);
+
+			// If the QR code is found, display its data
+			if (qrCode) {
+			qr_true = qrCode.data + "&user={{ username }}"
+			qrResult.innerHTML = qr_true;
+
+			// Prompt the user to proceed to the corresponding app
+			var response = confirm("QRコードを読み取れました！※QRコードを認識した後はQRコードをカメラに映らないようにするとうまくページが飛べます。");
+
+			if (response) {
+				// Open the scanned site in the same tab
+				window.location.href = qr_true;
+			} else {
+				// Return to the original game.HTML
+				window.location.href = "/game?user={{ username }}";
+			}
+			}
+		}
+		}, 100);
+	</script>
+	<script>
+		document.getElementById("quit-game").addEventListener("click", function() {
+			var confirmQuit = confirm("本当にゲームを終了してホーム画面に戻りますか？");
+			if (confirmQuit) {
+				window.location.href = "/personal?user={{ username }}"; // Use the passed username variable here
+			}
+		});
+	</script>
+</body>
+</html>

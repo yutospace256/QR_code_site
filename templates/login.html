@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>Log in</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      /* Style for the loading screen */
+      #loading-screen {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: #f0f0f0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+      }
+    </style>
+  </head>
+ <body>
+    <div id="loading-screen">
+        <h1>Loading...</h1>
+    </div>
+    <script>
+      window.addEventListener('load', function() {
+          // When the page is fully loaded, hide the loading screen
+          document.getElementById('loading-screen').style.display = 'none';
+      });
+    </script>
+    <header>
+      <img src="static\img\rogo_font.png">
+    </header>
+    <div class="container">
+      <p>四桁の番号を入力すると<br>記録画面が見れます。</p>
+      <form action="/login" method="POST" style="display: block;">
+        <input type="text" name="username" placeholder="四桁の番号(半角)" required>
+        <input type="submit" value="記録を見る">
+      </form>
+      {% if error %}
+        <p class="error">{{ error }}</p>
+      {% endif %}
+    </div>
+  </body>
+</html>
