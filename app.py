@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, session 
-import json
 import random
 import requests
 from datetime import date
@@ -10,38 +9,9 @@ from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-
-
-
-
 app.secret_key = 'jKtZuPqEhXrMnLbVgYf'
 app.permanent_session_lifetime = timedelta(minutes=10)
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_PORT'] = 3306
-app.config['MYSQL_DB'] = 'user_db'
-
-LOG_FILE_PATH = 'logs.json'
-DATA_FILE_PATH = "data.json"
-RANKING_FILE_PATH = "ranking.json"
-TODAYS_RANKING_FILE = "todays_ranking.json"
-
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_PORT'] = 3306
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Yuto0712yutoMySQL'
-app.config['MYSQL_DB'] = 'user_db'
-
-
-def connect_to_database():
-    connection = mysql.connector.connect(
-        host=app.config['MYSQL_HOST'],
-        port=app.config['MYSQL_PORT'],
-        user=app.config['MYSQL_USER'],
-        password=app.config['MYSQL_PASSWORD'],
-        database=app.config['MYSQL_DB']
-    )
-    return connection
 
 def add_user_to_data(username):
     cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
@@ -81,14 +51,23 @@ def get_user_by_username(username):
     query = "SELECT * FROM users WHERE username = %s"
     cursor.execute(query, (username, ))
 
+    # Fetch the column names
+    column_names = cursor.column_names
+
     # Fetch the user data
     user_data = cursor.fetchone()
+
+    user_dict = None
+    
+    if user_data != None:
+        # Create a dictionary using column names as keys
+        user_dict = dict(zip(column_names, user_data))
 
     # Close the cursor and connection
     cursor.close()
     cnx.close()
 
-    return user_data
+    return user_dict
 
 def get_random_username():
     while True:
@@ -153,121 +132,171 @@ def add_points_to_user(username, earned_points):
     cursor.close()
     cnx.close()
 
-def return_userdata(username):
-    with open('data.json', 'r') as json_file:
-        data = json.load(json_file)
-    for user in data['users']:
-        if user['username'] == username:
-            userdata= user
-            break
-        else:
-            userdata = None
-    return userdata
-
 def average_points_fn():
-    with open('data.json', 'r') as json_file:
-        data = json.load(json_file)
-    total_points = 0
-    user_count = 0
-    for user in data['users']:
-        if user["points"] == 0:
-            continue
-        total_points += user['points']
-        user_count += 1
-    average_points = total_points / user_count
+    # Establish a connection to the MySQL database
+    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', database='user_db')
+    cursor = cnx.cursor()
+
+    # Execute the query
+    query = "SELECT AVG(points) FROM users WHERE points > 0"
+    cursor.execute(query)
+
+    # Fetch the average points
+    average_points = cursor.fetchone()[0]
     average_points = round(average_points, 3)
+
+    # Execute another query to get the count of users with points > 1
+    count_query = "SELECT COUNT(*) FROM users WHERE points > 0"
+    cursor.execute(count_query)
+
+    # Fetch the count
+    user_count = cursor.fetchone()[0]
+
+    # Close the cursor and connection
+    cursor.close()
+    cnx.close()
+
     return average_points, user_count
 
 def show_user_data():
-    with open('data.json', 'r') as f:
-        data = json.load(f)
-    user_data = []
-    
-    sorted_data = sorted(data['users'], key=lambda x: datetime.strptime(x['game_time'], '%Y-%m-%d %H:%M:%S') if x['game_time'] else datetime.min, reverse=True)
+    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
 
-    for entry in sorted_data[:20]:
-        user_data.append({
-            'username': entry['username'],
-            'nickname': entry['nickname'],
-            'points': entry['points'],
-            'game_played': entry['game_played'],
-            'game_time': entry['game_time']   
-        })
+    # Fetch the user data from the MySQL table
+    query = "SELECT * FROM users ORDER BY game_time DESC"
+    cursor.execute(query)
+    user_data = cursor.fetchall()
 
-    return user_data
+    column_names = cursor.column_names
 
-    
+    i = 0
+    recent_data = []
+    for user in user_data:
+        if user[4] == None:
+            break
+        user_dict = dict(zip(column_names, user))
+        recent_data.append(user_dict)
+        i +=1
+        if i > 39:
+            break
+
+    return recent_data
 
 def generate_ranking_data():
-    with open(DATA_FILE_PATH) as file:
-        user_data = json.load(file)["users"]
+    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
 
-    sorted_users = sorted(user_data, key=lambda x: x["points"], reverse=True)
+    # Fetch the user data from the MySQL table
+    query = "SELECT * FROM users ORDER BY points DESC"
+    cursor.execute(query)
+    user_data = cursor.fetchall()
+
     ranking_data = []
-
     rank = 0
     prev_points = None
 
-    for user in sorted_users:
-        if user["points"] == 0:
+    for user in user_data:
+        points = user[2]
+        if points == 0:
             continue
-        if prev_points is None or user["points"] < prev_points:
+        if prev_points is None or points < prev_points:
             rank += 1
-        if rank <= 10:
-            username = user["username"]
-            points = user["points"]
-            game_played = user["game_played"]
-            game_time = user["game_time"]
-            nickname = user.get("nickname")  # Use get() method with a default value of None
-            ranking_data.append({"rank": rank, "username": username, "points": points, "game_played": game_played, "game_time": game_time, "nickname": nickname})
+        if rank <= 5:
+            username = user[1]
+            game_played = user[3]
+            game_time = user[4]
+            nickname = user[5]
+            ranking_data.append({
+                "rank": rank,
+                "username": username,
+                "points": points,
+                "game_played": game_played,
+                "game_time": game_time,
+                "nickname": nickname
+            })
         else:
             break
-        prev_points = user['points']
+        prev_points = points
 
-    with open(RANKING_FILE_PATH, 'w') as file:
-        json.dump(ranking_data, file, indent=4)
+    # Store the ranking data in the MySQL table
+    truncate_query = "TRUNCATE TABLE ranking"
+    cursor.execute(truncate_query)
+
+    insert_query = ("INSERT INTO ranking "
+                    "(`ranking`, username, points, game_played, game_time, nickname) "
+                    "VALUES (%s, %s, %s, %s, %s, %s)")
+
+    for rank_data in ranking_data:
+        values = (rank_data["rank"], rank_data["username"], rank_data["points"], rank_data["game_played"], rank_data["game_time"], rank_data["nickname"])
+        cursor.execute(insert_query, values)
+
+    cnx.commit()
+
+    cursor.close()
+    cnx.close()
 
     return ranking_data
 
+
 def generate_todays_data():
-    with open(DATA_FILE_PATH) as file:
-        user_data = json.load(file)["users"]
+    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
 
-    sorted_users = sorted(user_data, key=lambda x: x["points"], reverse=True)
+    # Fetch the user data from the MySQL table
+    query = "SELECT * FROM users ORDER BY points DESC"
+    cursor.execute(query)
+    user_data = cursor.fetchall()
+
     todays_data = []
-
+    today = date.today()
+    today_str = today.strftime("%Y-%m-%d")
     rank = 0
     prev_points = None
 
-    today = date.today()
-
-    for user in sorted_users:
-        if user["points"] == 0:
+    for user in user_data:
+        points = user[2]
+        if points == 0:
             continue
+        game_time_obj = user[4]
+        game_time_str = game_time_obj.strftime("%Y-%m-%d")
+        if game_time_str == today_str:
+            if prev_points is None or points < prev_points:
+                rank += 1
+            if rank <= 5:
+                username = user[1]
+                game_played = user[3]
+                game_time = user[4]
+                nickname = user[5]
+                todays_data.append({
+                    "rank": rank,
+                    "username": username,
+                    "points": points,
+                    "game_played": game_played,
+                    "game_time": game_time,
+                    "nickname": nickname
+                })
+            else:
+                break
+            prev_points = points
+            
+        # Store the ranking data in the MySQL table
+    truncate_query = "TRUNCATE TABLE ranking"
+    cursor.execute(truncate_query)
 
-        game_time_str = user.get("game_time")
-        if game_time_str is not None:
-            game_time = datetime.strptime(game_time_str, "%Y-%m-%d %H:%M:%S").date()
-            if game_time == today:
-                if prev_points is None or user["points"] < prev_points:
-                    rank += 1
+    insert_query = ("INSERT INTO todays_ranking "
+                    "(ranking, username, points, game_played, game_time, nickname) "
+                    "VALUES (%s, %s, %s, %s, %s, %s)")
 
-                if rank <= 10:
-                    username = user["username"]
-                    points = user["points"]
-                    game_played = user["game_played"]
-                    nickname = user.get("nickname")  # Use get() method with a default value of None
-                    todays_data.append({"rank": rank, "username": username, "points": points, "game_played": game_played, "nickname": nickname})
-                else:
-                    break
+    for rank_data in todays_data:
+        values = (rank_data["rank"], rank_data["username"], rank_data["points"], rank_data["game_played"], rank_data["game_time"], rank_data["nickname"])
+        cursor.execute(insert_query, values)
 
-                prev_points = user['points']
+    cnx.commit()
 
-    with open(TODAYS_RANKING_FILE, 'w') as file:
-        json.dump(todays_data, file, indent=4)
+    cursor.close()
+    cnx.close()
 
     return todays_data
-
 
 def log_check(username, site_number):
     cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', database='user_db')
@@ -300,7 +329,7 @@ def index():
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get("username")
-    if username == "SHUKUGAWA":
+    if username == "DEVELOPER":
         return redirect(url_for("develop"))
     else:
         user = get_user_by_username(username)
@@ -332,9 +361,9 @@ def personal():
     username = request.args.get('user')
     ranking_data = generate_ranking_data()
     user = get_user_by_username(username)
-    points = user[2] if user else 0
-    game_played = user[3] if user else False
-    nickname = user[5] if user else None
+    points = user["points"] if user else 0
+    game_played = user["game_played"] if user else False
+    nickname = user["nickname"] if user else None
     if request.method == 'POST' and 'gamestart' in request.form:
         start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         game_start(username, start_time)
@@ -345,8 +374,8 @@ def personal():
 def game():
     username = request.args.get('user')
     user = get_user_by_username(username)
-    points = user[2] if user else 0
-    start_time = user[4] if user else 0
+    points = user["points"] if user else 0
+    start_time = user["game_time"] if user else 0
     remaining_time = timedelta(minutes=7) - (datetime.now() - start_time)
     time_sec = remaining_time.seconds
     user_logs = get_logs(username)
@@ -365,7 +394,7 @@ def add_points():
     site_number = request.args.get('site')
     username = request.args.get('user')
     user = get_user_by_username(username)
-    nickname = user[5] if user else None
+    nickname = user["nickname"] if user else None
     
     if request.method == 'POST':
         earned = log_check(username, site_number)
@@ -394,7 +423,7 @@ def quiz_points():
     site_number = request.args.get('site')
     username = request.args.get('user')
     user = get_user_by_username(username)
-    nickname = user[5] if user else None
+    nickname = user["nickname"] if user else None
     
     points_earned = None  # Assign a default value to points_earned
     if request.method == 'POST':
@@ -429,7 +458,7 @@ def hp_points():
     site_number = request.args.get('site')
     username = request.args.get('user')
     user = get_user_by_username(username)
-    nickname = user[5] if user else None
+    nickname = user["nickname"] if user else None
 
     if request.method == 'POST':
         earned = log_check(username, site_number)
@@ -455,7 +484,7 @@ def develop():
     if request.method == 'POST':
 
             entered_user = request.form['entered_user']
-            userdata = return_userdata(entered_user)
+            userdata = get_user_by_username(entered_user)
             if userdata:
                 return render_template('develop.html', userdata=userdata, average_points=average_points, user_count=user_count, entered_user=entered_user)
             else:
@@ -478,7 +507,7 @@ def show_user():
 @app.route("/data_modify", methods=['GET', 'POST'])
 def data_modify():
     username = request.args.get('user')
-    userdata = return_userdata(username)
+    userdata = get_user_by_username(username)
        
     return render_template('data_modify.html', userdata=userdata)
 
