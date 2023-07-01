@@ -31,7 +31,7 @@
       });
     </script>
     <header>
-      <h1>Welcome to Development Site!</h1>
+      <h1>Welcome to Development Site {{ username }}!</h1>
     </header>
     <div id="table">
         <table>
@@ -40,33 +40,43 @@
             <tr>
                 <th>Username</th>
                 <th>NickName</th>
+                <th>Points</th>
                 <th>Game Played</th>
                 <th>Game Time</th>
-                <th>Points</th>
             </tr>
             <tr>
                 <td>{{ userdata.username }}</td>
                 <td>{{ userdata.nickname }}</td>
+                <td>{{ userdata.points }}</td>
                 <td>{{ userdata.game_played }}</td>
                 <td>{{ userdata.game_time }}</td>
-                <td>{{ userdata.points }}</td>
             </tr>
             </tbody>
         </table>
         <p>{{ entered_user }}</p>
     </div>
-    <form  name="form1" method="POST" action="/data_modify">
-        <label for="cars">Choose a car:</label>
-        <select id="cars" name="cars">
-            <option value="volvo">NickName</option>
-            <option value="saab">Game Played</option>
-            <option value="fiat">Game Time</option>
-            <option value="audi">Points</option>
-        </select>
-        <br><br>
-        <input type="submit" value="Submit">
-    
+    <form name="form1" method="POST" action="/data_modify">
+      <label for="columns" class="columns">Choose a column:</label>
+      <select id="columns" name="column" class="column">
+          <option value="nickname">Nickname</option>
+          <option value="points">Points</option>
+          <option value="game_played">Game Played</option>
+          <option value="game_time">Game Time</option>
+      </select>
+      <br><br>
+      <input type="text" name="new_data" required>
+      <input type="hidden" name="change_user" value="{{ username }}">
+      <input type="submit" value="Submit">
     </form>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
     <a href="{{ url_for('develop') }}"><button class="back">Back</button></a>
   </body>
 </html>

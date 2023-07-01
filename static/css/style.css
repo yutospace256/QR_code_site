@@ -32,23 +32,16 @@ form {
 }
 
 header {
-  background-image: url(../img/ao.webp);
-  color: #fff;
-  font-size: large;
-  margin: 0;
-  width: 100%-8px;
-  border: 4px outset rgb(131, 253, 255);
-}
-
-header img {
-  width:100%;
-  filter:drop-shadow(3px 3px 3px #4e4e4e);
-}
-
-.boss_header {
-  height: 150px;
-  width: auto;
-  position:relative;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: aquamarine;
+  font-size: 2rem;
+  font-family: 'showcard';
+  text-shadow: 2px 2px 2px #4e4e4e;
+  background-color: #2c332c;
+  border-radius: 10px;
+  border: 2px solid gray;
+  padding: 0.5rem;
 }
 
 html {
@@ -138,7 +131,14 @@ input[type="text"] {
 }
 
 .error {
-  color: red;
+  background-color: #f2dede;
+  color: #a94442;
+}
+
+/* Success flash messages style */
+.success {
+  background-color: #dff0d8;
+  color: #3c763d;
 }
 
 b {

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session 
+from flask import Flask, render_template, request, redirect, url_for, session, flash, get_flashed_messages
 import random
 import requests
 from datetime import date
@@ -180,7 +180,46 @@ def show_user_data():
         if i > 39:
             break
 
+    cursor.close()
+    cnx.close()
     return recent_data
+
+def change_user_data(username, column, new_data):
+    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
+    # Change the value of the users table in mysql
+    change_query = "UPDATE users SET {} = %s WHERE username = %s".format(column)
+    cursor.execute(change_query, (new_data, username, ))
+
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+def check_column(column, new_data):
+    # Check if the data type of the column is correct.
+    if column == "points":
+        try:
+            new_data = int(new_data)
+        except ValueError:
+            return False
+    # Check if the data type of game_played is BOOLEAN type
+    elif column == "game_played":
+        if new_data.lower() not in ["0", "1"]:
+            return False
+    # Check if the data type of game_time is datetime type
+    elif column == "game_time":
+        try:
+            datetime.strptime(new_data, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return False
+    elif column == "nickname":
+        if len(new_data) > 20:
+            return False
+    else:
+        return False
+
+    return True
+
 
 def generate_ranking_data():
     cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
@@ -504,13 +543,21 @@ def show_user():
     user_data = show_user_data()
     return render_template('show_user.html', user_data=user_data)
 
-@app.route("/data_modify", methods=['GET', 'POST'])
+@app.route('/data_modify', methods=['GET', 'POST'])
 def data_modify():
     username = request.args.get('user')
     userdata = get_user_by_username(username)
-       
-    return render_template('data_modify.html', userdata=userdata)
-
+    if request.method == 'POST':
+        username = request.form['change_user']
+        column = request.form['column']
+        new_data = request.form['new_data']
+        if check_column(column, new_data) == False:
+            flash("Data type mismatch. Please check the data type entered.", "error")
+        else:
+            change_user_data(username, column, new_data)
+            flash("User data updated successfully.", "success")
+        return redirect(url_for('data_modify', user=username))
+    return render_template("data_modify.html", username=username, userdata=userdata)
 
 if __name__ == '__main__':
     app.run(debug=True)
