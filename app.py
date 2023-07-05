@@ -515,7 +515,7 @@ def signin():
         return render_template('signin.html', username=username, error="10文字以内で入力してください！")
     elif user is not None:
         if entered_nickname:  # Check if a nickname was entered
-            entered_nickname(entered_username, entered_nickname) 
+            change_nickname(entered_username, entered_nickname) 
         return redirect(url_for('personal', user=entered_username))
     else:
         return render_template('signin.html', username=username, error="パスワードが間違っています！半角かを確認して、もう一度入力してください")
