@@ -246,3 +246,19 @@ caption {
   font-size: 1.3rem;
   font-weight: bold;
 }
+#loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* pie_graph should have 5 img lined up horizontally */
+.pie_graph {
+  width: 20%;
+  height: auto;
+}
