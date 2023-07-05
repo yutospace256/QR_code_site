@@ -30,21 +30,21 @@
             <tbody>
                 <caption style="margin:10px">Points Ranking</caption><br>
             <tr>
-                <th>順位</th>
-                <th>プレイヤー</th>
-                <th>ポイント</th>
-                <th>ポイント</th>
-                <th>ポイント</th>
-                <th>ポイント</th>
+                <th>RANK</th>
+                <th>player</th>
+                <th>nickname</th>
+                <th>points</th>
+                <th>game_played</th>
+                <th>game_time</th>
             </tr>
             {% for user in ranking %}
                 <tr>
                     <td>{{ user.rank }}位</td>
                     <td>{{ user.username }}</td>
+                    <td>{{ user.nickname }}</td>
                     <td>{{ user.points }}</td>
                     <td>{{ user.game_played }}</td>
                     <td>{{ user.game_time }}</td>
-                    <td>{{ user.nickname }}</td>
                 </tr>
             {% endfor %}
             </tbody>

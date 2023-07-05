@@ -5,20 +5,6 @@
     <title>QR Code Poonts</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-      /* Style for the loading screen */
-      #loading-screen {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: #f0f0f0;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-      }
-    </style>
   </head>
  <body>
     <div id="loading-screen">
@@ -67,6 +53,13 @@
     {% endif %}
     <p>Average Points : {{ average_points }}</p>
     <p>The number of users now : {{ user_count }}</p>
+    <img src="static\img\bar_graph.png">
+
+    <!--Show all pngs in static/img/pie_graphs/-->
+    {% for filepath in filepaths %}
+        <img class="pie_graph" src="{{ filepath }}">
+    {% endfor %}
+
     <a href="{{ url_for('show_user') }}"><button>Show Recent User Data</button></a>
     <a href="{{ url_for('dev_ranking') }}"><button>Ranking</button></a>
     
