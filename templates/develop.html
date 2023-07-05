@@ -18,6 +18,11 @@
           justify-content: center;
           align-items: center;
       }
+      /* pie_graph should have 5 img lined up horizontally */
+      .pie_graph {
+          width: 20%;
+          height: auto;
+      }
     </style>
   </head>
  <body>
@@ -67,7 +72,14 @@
     {% endif %}
     <p>Average Points : {{ average_points }}</p>
     <p>The number of users now : {{ user_count }}</p>
-    <a href="{{ url_for('show_user') }}"><button>Show Recent User Data</button></a>
+    <img src="static\img\bar_graph.png">
+
+    <!--Show all pngs in static/img/pie_graphs/-->
+    {% for filepath in filepaths %}
+        <img class="pie_graph" src="{{ filepath }}">
+    {% endfor %}
+
+        <a href="{{ url_for('show_user') }}"><button>Show Recent User Data</button></a>
     <a href="{{ url_for('dev_ranking') }}"><button>Ranking</button></a>
     
   </body>

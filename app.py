@@ -5,7 +5,14 @@ from datetime import date
 from datetime import datetime, timedelta
 from flask_session import Session
 import mysql.connector
-from urllib.parse import urlparse
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+from io import BytesIO
+import base64
 
 app = Flask(__name__)
 
@@ -303,9 +310,9 @@ def add_site_data():
         cursor.execute(insert_query, values)
     site_number_2 = [201, 202, 203]
     for j in range(3):
-        values = (1, site_number_2[j], 10, 0, 0)
+        values = (2, site_number_2[j], 10, 0, 0)
         cursor.execute(insert_query, values)
-    values = (1, 301, 30, 0, 0)
+    values = (3, 301, 30, 0, 0)
     cursor.execute(insert_query, values)
     cnx.commit()
     cursor.close()
@@ -341,11 +348,65 @@ def insert_site_data():
     cursor.close()
     cnx.close()
 
-def analyze_site_data(user_count):
+def analyze_and_generate_graphs(user_count):
     cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
     cursor = cnx.cursor()
 
-    
+    # Retrieve data from the site_data table
+    query = "SELECT * FROM site_data"
+    cursor.execute(query)
+    site_data = cursor.fetchall()
+
+    cursor.close()
+    cnx.close()
+
+    # Separate site numbers, correct counts, and get minus correct counts
+    site_numbers = [str(site[2]) for site in site_data]
+    correct_counts = [site[4] for site in site_data]
+    incorrect_counts = [site[5] - site[4] for site in site_data]
+    data_labels = [site[5] for site in site_data]
+
+    # Create the bar graph
+    fig, ax = plt.subplots()
+    x = range(len(site_numbers))  # Use numerical values for the x-axis
+    ax.bar(x, correct_counts, label='Correct', color='blue')
+    ax.bar(x, incorrect_counts, bottom=correct_counts, label='Incorrect', color='red')
+
+    # Add data labels. If 0, do not display.
+    for i, v in enumerate(data_labels):
+        if v != 0:
+            ax.text(i, v, str(v), ha='center', va='bottom')
+
+    ax.set_xlabel('Site Number')
+    ax.set_ylabel('Count')
+    ax.set_title('Site Data Analysis')
+    ax.set_ylim(0, user_count)
+    ax.set_xticks(x)  # Use numerical values for the x-axis
+    ax.set_xticklabels(site_numbers, rotation=40)
+
+    ax.legend()
+
+    # Save the bar graph
+    graph_path = 'static/img/bar_graph.png'
+    fig.savefig(graph_path)
+    plt.close()
+
+
+    # Create pie charts for each site_number
+    pie_images = []
+    for site_number, correct_count, incorrect_count in zip(site_numbers, correct_counts, incorrect_counts):
+        # Conditional branching when the first character of site_number is 2
+        if site_number[0] == '2':
+            fig, ax = plt.subplots()
+            ax.pie([correct_count, incorrect_count], labels=['Correct', 'Incorrect'], autopct='%1.1f%%', colors=['blue', 'red'])
+            ax.set_title('Site Number: ' + site_number)
+            ax.legend()
+            pie_path = 'static\img\pie_graphs/pie_' + site_number + '.png'
+            fig.savefig(pie_path)
+            plt.close()
+            pie_images.append(pie_path)
+
+    return pie_images
 
 def generate_todays_data():
     cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
@@ -460,7 +521,7 @@ def signin():
         return render_template('signin.html', username=username, error="10文字以内で入力してください！")
     elif user is not None:
         if entered_nickname:  # Check if a nickname was entered
-            change_nickname(entered_username, entered_nickname) 
+            (entered_username, entered_nickname) 
         return redirect(url_for('personal', user=entered_username))
     else:
         return render_template('signin.html', username=username, error="パスワードが間違っています！半角かを確認して、もう一度入力してください")
@@ -591,16 +652,20 @@ def hp_points():
 def develop():
     average_points, user_count = average_points_fn()
     insert_site_data()
+    
+    # Call the analyze_and_generate_graphs function
+    pie_images = analyze_and_generate_graphs(user_count)
+
     if request.method == 'POST':
         entered_user = request.form['entered_user']
         userdata = get_user_by_username(entered_user)
         if userdata:
-            return render_template('develop.html', userdata=userdata, average_points=average_points, user_count=user_count, entered_user=entered_user)
+            return render_template('develop.html', userdata=userdata, average_points=average_points, user_count=user_count, entered_user=entered_user, filepaths=pie_images)
         else:
             error = "No user has this username."
-            return render_template('develop.html', average_points=average_points, user_count=user_count, error=error)
+            return render_template('develop.html', average_points=average_points, user_count=user_count, error=error, filepaths=pie_images)
        
-    return render_template('develop.html', average_points=average_points, user_count=user_count)
+    return render_template('develop.html', average_points=average_points, user_count=user_count, filepaths=pie_images)
 
 @app.route("/dev_ranking", methods=['GET', 'POST'])
 def dev_ranking():
