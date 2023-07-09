@@ -19,25 +19,25 @@
         }
       </style>
     </head>
-   <body>
-      <div id="loading-screen">
-          <h1>Loading...</h1>
-      </div>
-      <script>
-        window.addEventListener('load', function() {
-            // When the page is fully loaded, hide the loading screen
-            document.getElementById('loading-screen').style.display = 'none';
-        });
-      </script>
+    <body>
+        <div id="loading-screen">
+            <h1>Loading...</h1>
+        </div>
+        <script>
+            window.addEventListener('load', function() {
+                // When the page is fully loaded, hide the loading screen
+                document.getElementById('loading-screen').style.display = 'none';
+            });
+        </script>
     <header>
-        <img src="static\img\rogo_font.png">
+        <p>This is site {{ site_number }}</p>
     </header>
     <div class="container">
         {% if not points_earned %}
-            <p>敵の<b>かっぱ</b>だ！</p>
-            <img class="char" src="../../static/img/char/kappa.webp">
+            <p>It's a friendly character <b>{{ char_name }}</b>.</p>
+            <img class="char" src="../../static/img/char/tori.webp">
             <form method="POST" action="{{ url_for('add_points', site=site_number, user=username) }}">
-                <input type="hidden" name="points" value="2">
+                <input type="hidden" name="points" value="{{ value }}">
                 <input type="submit" name="earn_points" value="ポイントゲット！">
             </form>
         {% else %}
@@ -45,7 +45,7 @@
                 <p class="error">{{ error }}</p>
             {% else %}    
                 <p><b>{{ points_earned }}</b> ポイントゲット！</p>
-                <img class="char" src="../../static/img/char_make/kappa_make.webp">
+                <img class="char" src="../../static/img/char/tori.webp">
             {% endif %}
             <button id="return-to-game">ゲームを続ける</button>
         {% endif %}

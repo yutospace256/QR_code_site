@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <title>Add Points</title>
+    <title>Add Points {{ site_number }}</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
@@ -16,6 +16,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+        /* Align the beginning of the choices */
+        input[type="radio"] {
+            margin-left: 0;
+            margin-bottom: 10px;
         }
       </style>
     </head>
@@ -34,25 +39,35 @@
     </header>
     <div class="container">
         {% if not points_earned %}
-            <p>敵の<b>イカ</b>だ！</p>
-            <img class="char" src="../../static/img/char/ika.webp">
-            <form method="POST" action="{{ url_for('add_points', site=site_number, user=username) }}">
-                <input type="hidden" name="points" value="2">
-                <input type="submit" name="earn_points" value="ポイントゲット！">
+            <p>It's a friendly character <b>{{ char_name }}</b>.</p>
+            <img class="char" src="../../static/img/char/yousei.webp">
+            <form method="POST" action="{{ url_for('quiz_points', site=site_number, user=username) }}">
+                <p><b>Question : </b>{{ question }}</p>
+                {% for choice in choices %}
+                    <input type="radio" name="answer" value="{{ choice['value'] }}"> {{ choice['choice'] }}<br>
+                {% endfor %}
+                <input type="hidden" name="points" value="{{ value }}">  <!-- Set the fixed points value -->
+                <input type="submit" name="earn_points" value="Submit">
             </form>
         {% else %}
             {% if error %}
                 <p class="error">{{ error }}</p>
             {% else %}    
-                <p><b>{{ points_earned }}</b> ポイントゲット！</p>
-                <img class="char" src="../../static/img/char_make/ika_make.webp">
+                {% if quiz_correct %}
+                    <p>大正解！ <b>{{ points_earned }}</b> ポイントゲット！</p>
+                    <img class="char" src="../../static/img/char_make/yousei_make.webp">
+                {% else %}
+                    <p>残念！ ポイントゲットならず！</p>
+                    <img class="char" src="../../static/img/char/yousei.webp">
+                {% endif %}
             {% endif %}
             <button id="return-to-game">ゲームを続ける</button>
         {% endif %}
         <button id="back-button" class="back">戻る</button>
     </div>
+    
 
-    <script>   
+    <script>
         // Redirect the user back to the game page when the "Return to Game" button is clicked
         document.getElementById("return-to-game").addEventListener("click", function() {
             window.location.href = "/game?user={{ username }}";

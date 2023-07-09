@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 app = Flask(__name__)
 
@@ -221,6 +222,90 @@ def check_column(column, new_data):
 
     return True
 
+def add_site_data():
+    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
+    # INSERT into table named site_data
+    insert_query = ("INSERT INTO site_data "
+                    "(site_type, site_number, points, correct_count, get_count) "
+                    "VALUES (%s, %s, %s, %s, %s)")
+    #Make a list of site_number and points
+    # 101~103 is 1 point, 104~108 is 2 points, 109~113 is 3 points, 114~116 is 4 points
+    site_number = []
+    points = []
+    for i in range(101, 117):
+        site_number.append(i)
+        if i <= 103:
+            points.append(1)
+        elif i <= 108:
+            points.append(2)
+        elif i <= 113:
+            points.append(3)
+        else:
+            points.append(4)
+    # INSERT site_type to 1, site_number,points to mysql using the list above
+    for j in range(16):
+        values = (1, site_number[j], points[j], 0, 0)
+        cursor.execute(insert_query, values)
+    site_number_2 = [201, 202, 203]
+    for j in range(3):
+        values = (2, site_number_2[j], 10, 0, 0)
+        cursor.execute(insert_query, values)
+    values = (3, 301, 30, 0, 0)
+    cursor.execute(insert_query, values)
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+def get_site_data(site_number):
+    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
+
+    # site_number takes the value of site_number from the site_data table
+    query = "SELECT * FROM site_data WHERE site_number = %s"
+    cursor.execute(query, (site_number, ))
+    site_data = cursor.fetchone()
+
+     # Fetch the column names
+    column_names = cursor.column_names
+
+    # Create a dictionary with column names and values
+    site_data = dict(zip(column_names, site_data))
+
+    cursor.close()
+    cnx.close()
+    
+    return site_data
+
+def insert_site_data():
+    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
+
+    # Refer to the site_number column from the logs table and count how many have the same value
+    query = "SELECT site_number, COUNT(*) FROM logs GROUP BY site_number"
+    cursor.execute(query)
+    site_data = cursor.fetchall()
+    
+    # Count the non-zeor number in the points column of the logs table by site_number column
+    query = "SELECT site_number, COUNT(*) FROM logs WHERE points != 0 GROUP BY site_number"
+    cursor.execute(query)
+    site_data_2 = cursor.fetchall()
+
+    # Assign the above site_data to the get_count column of the site_data table
+    for site in site_data:
+        update_query = "UPDATE site_data SET get_count = %s WHERE site_number = %s"
+        values = (site[1], site[0])
+        cursor.execute(update_query, values)
+    
+    # Difference of counts from site_data, site_data_2 by site_number
+    for site in site_data_2:
+        update_query = "UPDATE site_data SET correct_count = %s WHERE site_number = %s"
+        values = (site[1], site[0])
+        cursor.execute(update_query, values)
+    
+    cnx.commit()
+    cursor.close()
+    cnx.close()
 
 def generate_ranking_data():
     cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
@@ -276,71 +361,6 @@ def generate_ranking_data():
     cnx.close()
 
     return ranking_data
-
-def add_site_data():
-    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
-    cursor = cnx.cursor()
-    # INSERT into table named site_data
-    insert_query = ("INSERT INTO site_data "
-                    "(site_type, site_number, points, correct_count, get_count) "
-                    "VALUES (%s, %s, %s, %s, %s)")
-    #Make a list of site_number and points
-    # 101~103 is 1 point, 104~108 is 2 points, 109~113 is 3 points, 114~116 is 4 points
-    site_number = []
-    points = []
-    for i in range(101, 117):
-        site_number.append(i)
-        if i <= 103:
-            points.append(1)
-        elif i <= 108:
-            points.append(2)
-        elif i <= 113:
-            points.append(3)
-        else:
-            points.append(4)
-    # INSERT site_type to 1, site_number,points to mysql using the list above
-    for j in range(16):
-        values = (1, site_number[j], points[j], 0, 0)
-        cursor.execute(insert_query, values)
-    site_number_2 = [201, 202, 203]
-    for j in range(3):
-        values = (2, site_number_2[j], 10, 0, 0)
-        cursor.execute(insert_query, values)
-    values = (3, 301, 30, 0, 0)
-    cursor.execute(insert_query, values)
-    cnx.commit()
-    cursor.close()
-    cnx.close()
-
-def insert_site_data():
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
-    cursor = cnx.cursor()
-
-    # Refer to the site_number column from the logs table and count how many have the same value
-    query = "SELECT site_number, COUNT(*) FROM logs GROUP BY site_number"
-    cursor.execute(query)
-    site_data = cursor.fetchall()
-    
-    # Count the non-zeor number in the points column of the logs table by site_number column
-    query = "SELECT site_number, COUNT(*) FROM logs WHERE points != 0 GROUP BY site_number"
-    cursor.execute(query)
-    site_data_2 = cursor.fetchall()
-
-    # Assign the above site_data to the get_count column of the site_data table
-    for site in site_data:
-        update_query = "UPDATE site_data SET get_count = %s WHERE site_number = %s"
-        values = (site[1], site[0])
-        cursor.execute(update_query, values)
-    
-    # Difference of counts from site_data, site_data_2 by site_number
-    for site in site_data_2:
-        update_query = "UPDATE site_data SET correct_count = %s WHERE site_number = %s"
-        values = (site[1], site[0])
-        cursor.execute(update_query, values)
-    
-    cnx.commit()
-    cursor.close()
-    cnx.close()
 
 def analyze_and_generate_graphs(user_count):
     cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
@@ -477,7 +497,7 @@ def log_check(username, site_number):
     cnx.close()
 
     return earned
-        
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -559,6 +579,9 @@ def add_points():
     username = request.args.get('user')
     user = get_user_by_username(username)
     nickname = user["nickname"] if user else None
+    site_data = get_site_data(site_number)
+    value = site_data["points"]
+    char_name = site_data["title"]
     
     if request.method == 'POST':
         earned = log_check(username, site_number)
@@ -566,20 +589,13 @@ def add_points():
             points_earned = int(request.form.get('points', 0))
             add_logs_list(username, points_earned, nickname, site_number)
             add_points_to_user(username, points_earned)
-
-            template_name = f'add_points/add_points_{site_number}.html'
-            return render_template(template_name, username=username, site_number=site_number, points_earned=points_earned, nickname=nickname)
-
+            return render_template('points_sites/add_points.html', username=username, value=value, char_name=char_name, site_number=site_number, points_earned=points_earned, nickname=nickname)
         else:
             error = "二回目以降はポイント獲得できません！"
             points_earned = "0"
-            template_name = f'add_points/add_points_{site_number}.html'
-            return render_template(template_name, username=username, site_number=site_number, points_earned=points_earned, error=error)
+            return render_template('points_sites/add_points.html', username=username, site_number=site_number, value=value, char_name=char_name, points_earned=points_earned, error=error)
 
-
-        
-    template_name = f'add_points/add_points_{site_number}.html'
-    return render_template(template_name, username=username, site_number=site_number, points_earned=None)
+    return render_template('points_sites/add_points.html', username=username, site_number=site_number, value=value, char_name=char_name, points_earned=None)
 
 
 @app.route('/quiz_points', methods=['GET', 'POST'])
@@ -588,7 +604,13 @@ def quiz_points():
     username = request.args.get('user')
     user = get_user_by_username(username)
     nickname = user["nickname"] if user else None
-    
+    site_data = get_site_data(site_number)
+    value = site_data["points"]
+    char_name = site_data["title"]
+    question = site_data["question"]
+    choices_json = site_data["choices"]
+    choices = json.loads(choices_json)
+               
     points_earned = None  # Assign a default value to points_earned
     if request.method == 'POST':
         earned = log_check(username, site_number)
@@ -604,17 +626,14 @@ def quiz_points():
             add_points_to_user(username, points_earned)
 
             points_earned = int(request.form.get('points', 0))
-            template_name = f'add_points/quiz_points_{site_number}.html'
-            return render_template(template_name, username=username, site_number=site_number, points_earned=points_earned, quiz_correct=quiz_correct)
+            return render_template("points_sites/quiz_points.html", username=username, site_number=site_number, value=value, char_name=char_name, question=question, choices=choices, points_earned=points_earned, quiz_correct=quiz_correct)
         else:
             error = "二回目以降はポイント獲得できません！"
             points_earned = "0"
             quiz_correct = False
-            template_name = f'add_points/quiz_points_{site_number}.html'
-            return render_template(template_name, username=username, site_number=site_number, points_earned=points_earned, quiz_correct=quiz_correct, error=error)
+            return render_template("points_sites/quiz_points.html", username=username, site_number=site_number, value=value, char_name=char_name, question=question, choices=choices, points_earned=points_earned, quiz_correct=quiz_correct, error=error)
 
-    template_name = f'add_points/quiz_points_{site_number}.html'
-    return render_template(template_name, username=username, site_number=site_number, points_earned=None, quiz_correct=None)
+    return render_template("points_sites/quiz_points.html", username=username, site_number=site_number, value=value, char_name=char_name, question=question, choices=choices, points_earned=None, quiz_correct=None)
 
 
 @app.route('/hp_points', methods=['GET', 'POST'])
@@ -623,6 +642,10 @@ def hp_points():
     username = request.args.get('user')
     user = get_user_by_username(username)
     nickname = user["nickname"] if user else None
+    site_data = get_site_data(site_number)
+    value = site_data["points"]
+    char_name = site_data["title"]
+    hp = site_data["hp"]
 
     if request.method == 'POST':
         earned = log_check(username, site_number)
@@ -631,16 +654,13 @@ def hp_points():
             add_logs_list(username, points_earned, nickname, site_number)
             add_points_to_user(username, points_earned)
 
-            template_name = f'add_points/hp_points_{site_number}.html'
-            return render_template(template_name, username=username, site_number=site_number, points_earned=points_earned)
+            return render_template("points_sites/hp_points.html", username=username, site_number=site_number, value=value, char_name=char_name, hp=hp, points_earned=points_earned)
         else:
             error = "二回目以降はポイント獲得できません！"
             points_earned = "0"
-            template_name = f'add_points/hp_points_{site_number}.html'
-            return render_template(template_name, username=username, site_number=site_number, points_earned=points_earned, error=error)
+            return render_template("points_sites/hp_points.html", username=username, site_number=site_number, value=value, char_name=char_name, hp=hp, points_earned=points_earned, error=error)
 
-    template_name = f'add_points/hp_points_{site_number}.html'
-    return render_template(template_name, username=username, site_number=site_number)
+    return render_template("points_sites/hp_points.html", username=username, site_number=site_number, value=value, char_name=char_name, hp=hp)
 
 @app.route("/develop", methods=['GET', 'POST'])
 def develop():
