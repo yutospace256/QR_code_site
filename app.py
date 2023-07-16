@@ -222,41 +222,6 @@ def check_column(column, new_data):
 
     return True
 
-def add_site_data():
-    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
-    cursor = cnx.cursor()
-    # INSERT into table named site_data
-    insert_query = ("INSERT INTO site_data "
-                    "(site_type, site_number, points, correct_count, get_count) "
-                    "VALUES (%s, %s, %s, %s, %s)")
-    #Make a list of site_number and points
-    # 101~103 is 1 point, 104~108 is 2 points, 109~113 is 3 points, 114~116 is 4 points
-    site_number = []
-    points = []
-    for i in range(101, 117):
-        site_number.append(i)
-        if i <= 103:
-            points.append(1)
-        elif i <= 108:
-            points.append(2)
-        elif i <= 113:
-            points.append(3)
-        else:
-            points.append(4)
-    # INSERT site_type to 1, site_number,points to mysql using the list above
-    for j in range(16):
-        values = (1, site_number[j], points[j], 0, 0)
-        cursor.execute(insert_query, values)
-    site_number_2 = [201, 202, 203]
-    for j in range(3):
-        values = (2, site_number_2[j], 10, 0, 0)
-        cursor.execute(insert_query, values)
-    values = (3, 301, 30, 0, 0)
-    cursor.execute(insert_query, values)
-    cnx.commit()
-    cursor.close()
-    cnx.close()
-
 def get_site_data(site_number):
     cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
     cursor = cnx.cursor()
@@ -303,6 +268,58 @@ def insert_site_data():
         values = (site[1], site[0])
         cursor.execute(update_query, values)
     
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+def dev_create_site_data(site_type, points, title):
+    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
+
+    # Get the site_number and the site_type of the data whose site_type is site_type in the site_data table.
+    query = "SELECT site_number, site_type FROM site_data WHERE site_type = %s"
+    cursor.execute(query, (site_type, ))
+    site_data = cursor.fetchall()
+    # Create new site_number
+    if len(site_data) == 0:
+        new_site_number = site_type + "01"
+    else:
+        new_site_number = int(site_data[-1][0]) + 1
+    
+    # Insert the new_site_number and site_type into the site_data table
+    # Columns and values are site_type=site_type, site_number=new_site_number,poitns=points,correct_count=0,get_count=0,title=title, hp=1,question="",choices =[]].
+    insert_query = "INSERT INTO site_data (site_type, site_number, points, correct_count, get_count, title, hp, question, choices) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    values = (site_type, new_site_number, points, 0, 0, title, 1, "", "[]")
+    cursor.execute(insert_query, values)
+
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+    return new_site_number
+
+def change_site_data(site_number, column, new_data):
+    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
+    if column == "choices":
+        # Retrieve the existing JSON value from the column
+        query = "SELECT choices FROM site_data WHERE site_number = %s"
+        cursor.execute(query, (site_number, ))
+        choices = cursor.fetchone()[0]
+        # Convert the existing JSON value to a Python list
+        choices = json.loads(choices)
+        # Add the new entry to the existing list
+        choices.append(new_data)
+        # Convert the list to JSON
+        choices = json.dumps(choices)
+        # Make the data in the column of site_number=site_number in the site_data table choices
+        change_query = "UPDATE site_data SET choices = %s WHERE site_number = %s"
+        cursor.execute(change_query, (choices, site_number, ))
+    else:
+        # Make the data in the column of site_number=site_number in the site_data table new_data
+        change_query = "UPDATE site_data SET {} = %s WHERE site_number = %s".format(column)
+        cursor.execute(change_query, (new_data, site_number, ))
+
     cnx.commit()
     cursor.close()
     cnx.close()
@@ -367,9 +384,10 @@ def analyze_and_generate_graphs(user_count):
     cursor = cnx.cursor()
 
     # Retrieve data from the site_data table
-    query = "SELECT * FROM site_data"
+    query = "SELECT * FROM site_data ORDER BY site_number ASC"
     cursor.execute(query)
     site_data = cursor.fetchall()
+
 
     cursor.close()
     cnx.close()
@@ -409,16 +427,19 @@ def analyze_and_generate_graphs(user_count):
     # Create pie charts for each site_number
     pie_images = []
     for site_number, correct_count, incorrect_count in zip(site_numbers, correct_counts, incorrect_counts):
-        # Conditional branching when the first character of site_number is 2
-        if site_number[0] == '2':
-            fig, ax = plt.subplots()
-            ax.pie([correct_count, incorrect_count], labels=['Correct', 'Incorrect'], autopct='%1.1f%%', colors=['blue', 'red'])
-            ax.set_title('Site Number: ' + site_number)
-            ax.legend()
-            pie_path = 'static\img\pie_graphs/pie_' + site_number + '.png'
-            fig.savefig(pie_path)
-            plt.close()
-            pie_images.append(pie_path)
+        if correct_count == 0 and incorrect_count == 0:
+            continue
+        else:
+            # Conditional branching when the first character of site_number is 2
+            if site_number[0] == '2':
+                fig, ax = plt.subplots()
+                ax.pie([correct_count, incorrect_count], labels=['Correct', 'Incorrect'], autopct='%1.1f%%', colors=['blue', 'red'])
+                ax.set_title('Site Number: ' + site_number)
+                ax.legend()
+                pie_path = 'static\img\pie_graphs/pie_' + site_number + '.png'
+                fig.savefig(pie_path)
+                plt.close()
+                pie_images.append(pie_path)
 
     return pie_images
 
@@ -666,7 +687,6 @@ def hp_points():
 def develop():
     average_points, user_count = average_points_fn()
     insert_site_data()
-    
     # Call the analyze_and_generate_graphs function
     pie_images = analyze_and_generate_graphs(user_count)
 
@@ -707,6 +727,56 @@ def data_modify():
             flash("User data updated successfully.", "success")
         return redirect(url_for('data_modify', user=username))
     return render_template("data_modify.html", username=username, userdata=userdata)
+
+@app.route('/dev_create_site', methods=['GET', 'POST'])
+def dev_create_site():
+    if request.method == 'POST':
+        progress = request.form ['progress']
+        if progress == "step1":
+            site_type = request.form['site_type']
+            title = request.form['title']
+            points = request.form['points']
+            new_site_number = dev_create_site_data(site_type, points, title)
+            if site_type == "2":
+                question = request.form['question']
+                change_site_data(new_site_number, column="question", new_data=question)
+                progress = "step2"
+            elif site_type == "3":
+                hp = request.form['hp']
+                change_site_data(new_site_number, column="hp", new_data=hp)
+                progress = "completed"
+            else: 
+                progress = "completed"
+            current_site_data = get_site_data(new_site_number)
+            choices_json = current_site_data["choices"]
+            current_choices_data = json.loads(choices_json)
+            return render_template("dev_create_site.html", progress=progress, new_site_number=new_site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
+        
+        elif progress == "step2":
+            if progress != "completed":
+                choice_value = request.form.getlist('choice_value')
+                choice_text = request.form.getlist('choice_text')
+                new_site_number = request.form['new_site_number']
+                # Make a dictionary of choice_value and choice_text and a list of them as choices_data.
+                
+                combined_dict = {'value': choice_value[0], 'choice': choice_text[0]}
+                change_site_data(new_site_number, column="choices", new_data=combined_dict)
+
+                current_site_data = get_site_data(new_site_number)
+                choices_json = current_site_data["choices"]
+                current_choices_data = json.loads(choices_json)
+                return render_template("dev_create_site.html", progress=progress, new_site_number=new_site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
+            
+        elif progress == "completed":
+            new_site_number = request.form['new_site_number']
+            current_site_data = get_site_data(new_site_number)
+            choices_json = current_site_data["choices"]
+            current_choices_data = json.loads(choices_json)
+            return render_template("dev_create_site.html", progress=progress, new_site_number=new_site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
+        return render_template("dev_create_site.html", progress=progress)
+    else:
+        progress = "step1"
+    return render_template("dev_create_site.html", progress=progress)
 
 if __name__ == '__main__':
     app.run(debug=True)

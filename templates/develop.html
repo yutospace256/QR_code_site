@@ -54,14 +54,17 @@
     <p>Average Points : {{ average_points }}</p>
     <p>The number of users now : {{ user_count }}</p>
     <img src="static\img\bar_graph.png">
+    <br>
 
     <!--Show all pngs in static/img/pie_graphs/-->
     {% for filepath in filepaths %}
         <img class="pie_graph" src="{{ filepath }}">
     {% endfor %}
+    <br>
 
     <a href="{{ url_for('show_user') }}"><button>Show Recent User Data</button></a>
     <a href="{{ url_for('dev_ranking') }}"><button>Ranking</button></a>
+    <a href="{{ url_for('dev_create_site') }}"><button>Create Site</button></a>
     
   </body>
 </html>
