@@ -48,8 +48,13 @@
     fieldset {
         margin: 10px;
     }
+    table {
+        border-collapse: collapse;
+        border: 1px solid #ccc;
+        margin: 10px;
+    }
     </style>
-<script>
+  <script>
     window.addEventListener('DOMContentLoaded', function() {
       var siteTypeRadioButtons = document.querySelectorAll('input[name="site_type"]');
       siteTypeRadioButtons.forEach(function(radioButton) {
@@ -106,10 +111,15 @@
         `;
       }
     }
+
+    function redirectToSiteModify(siteNumber) {
+      // Redirect to the site_modify page with the selected site number
+      window.location.href = `dev_site_modify?site=${siteNumber}`;
+    }
   </script>
   
 </head>
- <body>
+<body>
     <div id="loading-screen">
         <h1>Loading...</h1>
     </div>
@@ -164,9 +174,9 @@
     {% endif %}
 
     {% if progress == "step1" %}
-        <form name="create_site" method="POST" action="/create_site">
+        <form name="create_site" method="POST" action="/dev_create_site">
             <fieldset>
-            <legend>Site Information</legend>
+            <legend>Site Type</legend>
             <input type="radio" name="site_type" value="1" id="site_type_1" onchange="showForm()" checked>
             <label for="site_type_1">1 Normal</label>
             <input type="radio" name="site_type" value="2" id="site_type_2" onchange="showForm()">
@@ -177,6 +187,30 @@
             <div id="formDiv"></div>
             <button type="submit">Create Site</button>
         </form>
+
+      
+        <table>
+          <tbody>
+            <tr>
+              <th>Site Type</th>
+              <th>Site Number</th>
+              <th>Points</th>
+              <th>Title</th>
+              <th>HP</th>
+              <th>Question</th>
+            </tr>
+            {% for site in all_site_data %}
+              <tr onclick="redirectToSiteModify('{{ site[2] }}')">
+                <td>{{ site[1] }}</td>
+                <td>{{ site[2] }}</td>
+                <td>{{ site[3] }}</td>
+                <td>{{ site[6] }}</td>
+                <td>{{ site[7] }}</td>
+                <td>{{ site[8] }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
     {% elif progress == "step2" %}
       <form name="create_choices" method="POST" action="/create_site">
         <fieldset>
@@ -210,5 +244,5 @@
 
     <a href="{{ url_for('develop') }}"><button class="back">Back</button></a>
     
-  </body>
+</body>
 </html>

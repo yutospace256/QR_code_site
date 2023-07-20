@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <title>QR Code Poonts</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+</head>
+<body>
+    <header>
+        <h1>Welcome to Site Data Modify for {{ site_number }}!</h1>  
+    </header>
+
+    <table>
+        <tbody>
+          <tr>
+            <th>Site Type</th>
+            <th>Site Number</th>
+            <th>Points</th>
+            <th>Title</th>
+            <th>HP</th>
+            <th>Question</th>
+          </tr>
+            <tr onclick="redirectToSiteModify('{{ current_site_data[2] }}')">
+                <td>{{ current_site_data["site_type"] }}</td>
+                <td>{{ current_site_data["site_number"] }}</td>
+                <td>{{ current_site_data["points"] }}</td>
+                <td>{{ current_site_data["title"] }}</td>
+                <td>{{ current_site_data["hp"] }}</td>
+                <td>{{ current_site_data["question"] }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {% if current_choices_data %}
+        <table>
+            <tbody>
+            <caption style="margin:10px">Current Choices Data: {{ site_number }}</caption><br>
+            <tr>
+                <th>Choice Value</th>
+                <th>Choice Text</th>
+            </tr>
+            {% for choice in current_choices_data %}
+                <tr>
+                <td>{{ choice["value"] }}</td>
+                <td>{{ choice["choice"] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+
+    <form name="column_form" method="POST" action="/dev_site_modify">
+        {% if current_site_data["site_type"] == 1 %}
+            <fieldset>
+                <legend>Columns</legend>
+                <input type="radio" name="columns" value="points" id="points" checked>
+                <label for="points">Points</label>
+                <input type="radio" name="columns" value="title" id="title">
+                <label for="title">Title</label>
+            </fieldset>
+        {% elif current_site_data["site_type"] == 2 %}
+            <fieldset>
+                <legend>Columns</legend>
+                <input type="radio" name="columns" value="points" id="points"checked>
+                <label for="points">Points</label>
+                <input type="radio" name="columns" value="title" id="title">
+                <label for="title">Title</label>
+                <input type="radio" name="columns" value="question" id="question">
+                <label for="question">Question</label>
+            </fieldset>
+        {% elif current_site_data["site_type"] == 3 %}
+            <fieldset>
+                <legend>Columns</legend>
+                <input type="radio" name="columns" value="points" id="points"checked>
+                <label for="points">Points</label>
+                <input type="radio" name="columns" value="title" id="title">
+                <label for="title">Title</label>
+                <input type="radio" name="columns" value="hp" id="hp">
+                <label for="hp">HP</label>
+            </fieldset>
+        {% endif %}
+    
+        <label for="text_input">Text:</label>
+        <input type="text" name="text_input" id="text_input">
+        <br>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

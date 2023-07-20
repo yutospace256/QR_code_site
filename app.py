@@ -324,6 +324,20 @@ def change_site_data(site_number, column, new_data):
     cursor.close()
     cnx.close()
 
+def get_all_site_data():
+    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cursor = cnx.cursor()
+
+    # Fetch the user data from the MySQL table
+    query = "SELECT * FROM site_data ORDER BY site_number ASC"
+    cursor.execute(query)
+    site_data = cursor.fetchall()
+
+    cursor.close()
+    cnx.close()
+
+    return site_data
+
 def generate_ranking_data():
     cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
     cursor = cnx.cursor()
@@ -710,7 +724,7 @@ def dev_ranking():
 @app.route("/show_user", methods=['GET', 'POST'])
 def show_user():
     user_data = show_user_data()
-    return render_template('show_user.html', user_data=user_data)
+    return render_template('.html', user_data=user_data)
 
 @app.route('/data_modify', methods=['GET', 'POST'])
 def data_modify():
@@ -774,9 +788,20 @@ def dev_create_site():
             current_choices_data = json.loads(choices_json)
             return render_template("dev_create_site.html", progress=progress, new_site_number=new_site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
         return render_template("dev_create_site.html", progress=progress)
-    else:
-        progress = "step1"
-    return render_template("dev_create_site.html", progress=progress)
+    progress = "step1"
+    all_site_data = get_all_site_data()
+    return render_template("dev_create_site.html", progress=progress, all_site_data=all_site_data)
+
+@app.route('/dev_site_modify', methods=['GET', 'POST'])
+def dev_site_modify():
+    site_number = request.args.get('site')
+    current_site_data = get_site_data(site_number)
+    if site_number[0] == "2":
+        choices_json = current_site_data["choices"]
+        current_choices_data = json.loads(choices_json)
+        return render_template("dev_site_modify.html", site_number=site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
+
+    return render_template("dev_site_modify.html", site_number=site_number, current_site_data=current_site_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
