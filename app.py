@@ -8,6 +8,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+import dbconfig
 
 app = Flask(__name__)
 
@@ -16,7 +17,7 @@ app.permanent_session_lifetime = timedelta(minutes=10)
 
 
 def add_user_to_data(username):
-    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user3, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
     add_user = ("INSERT INTO users "
                 "(username, points, game_played, game_time, nickname)"
@@ -31,7 +32,7 @@ def add_user_to_data(username):
     cnx.close()
     
 def change_nickname(username, nickname):
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
     update_nickname = ("UPDATE users "
                        "SET nickname = %s "
@@ -46,7 +47,7 @@ def change_nickname(username, nickname):
 
 def get_user_by_username(username):
     # Establish a connection to the MySQL database
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # Execute the query
@@ -80,7 +81,7 @@ def get_random_username():
 
 def game_start(username, game_time):
 
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, database=dbconfig.db_name)
     cursor = cnx.cursor()
     game_upd = ("UPDATE users "
                   "SET game_played = %s, game_time = %s "
@@ -93,7 +94,7 @@ def game_start(username, game_time):
     cnx.close()
 
 def get_logs(username):
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, database=dbconfig.db_name)
     cursor = cnx.cursor()
     get_logs_query = "SELECT * FROM logs WHERE username = %s"
     cursor.execute(get_logs_query, (username, ))
@@ -110,7 +111,7 @@ def get_logs(username):
 def add_logs_list(username, points_earned, nickname, site_number):
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user3, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
     add_logs = ("INSERT INTO logs "
                 "(username, points, time, nickname, site_number)"
@@ -124,7 +125,7 @@ def add_logs_list(username, points_earned, nickname, site_number):
 
 
 def add_points_to_user(username, earned_points):
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, database=dbconfig.db_name)
     cursor = cnx.cursor()
     update_query = "UPDATE users SET points = points + %s WHERE username = %s"
     cursor.execute(update_query, (earned_points, username))
@@ -136,7 +137,7 @@ def add_points_to_user(username, earned_points):
 
 def average_points_fn():
     # Establish a connection to the MySQL database
-    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user3, password=dbconfig.user_pass, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # Execute the query
@@ -161,7 +162,7 @@ def average_points_fn():
     return average_points, user_count
 
 def show_user_data():
-    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user3, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # Fetch the user data from the MySQL table
@@ -187,7 +188,7 @@ def show_user_data():
     return recent_data
 
 def change_user_data(username, column, new_data):
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
     # Change the value of the users table in mysql
     change_query = "UPDATE users SET {} = %s WHERE username = %s".format(column)
@@ -223,7 +224,7 @@ def check_column(column, new_data):
     return True
 
 def get_site_data(site_number):
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # site_number takes the value of site_number from the site_data table
@@ -243,7 +244,7 @@ def get_site_data(site_number):
     return site_data
 
 def insert_site_data():
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # Refer to the site_number column from the logs table and count how many have the same value
@@ -273,7 +274,7 @@ def insert_site_data():
     cnx.close()
 
 def dev_create_site_data(site_type, points, title):
-    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user3, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # Get the site_number and the site_type of the data whose site_type is site_type in the site_data table.
@@ -299,7 +300,7 @@ def dev_create_site_data(site_type, points, title):
     return new_site_number
 
 def change_site_data(site_number, column, new_data):
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
     if column == "choices":
         # Retrieve the existing JSON value from the column
@@ -325,7 +326,7 @@ def change_site_data(site_number, column, new_data):
     cnx.close()
 
 def get_all_site_data():
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # Fetch the user data from the MySQL table
@@ -339,7 +340,7 @@ def get_all_site_data():
     return site_data
 
 def generate_ranking_data():
-    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user3, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # Fetch the user data from the MySQL table
@@ -394,7 +395,7 @@ def generate_ranking_data():
     return ranking_data
 
 def analyze_and_generate_graphs(user_count):
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # Retrieve data from the site_data table
@@ -458,7 +459,7 @@ def analyze_and_generate_graphs(user_count):
     return pie_images
 
 def generate_todays_data():
-    cnx = mysql.connector.connect(user='user03', password='YUTO0712yuto', host='localhost', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user3, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     # Fetch the user data from the MySQL table
@@ -518,7 +519,7 @@ def generate_todays_data():
     return todays_data
 
 def log_check(username, site_number):
-    cnx = mysql.connector.connect(user='user01', password='YUTO0712yuto', database='user_db')
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
     check_query = "SELECT 1 FROM logs WHERE username = %s AND site_number = %s LIMIT 1"

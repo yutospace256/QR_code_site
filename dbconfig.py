@@ -1,0 +1,5 @@
+user1 = 'user01'
+user3 = 'user03'
+user_pass = 'YUTO0712yuto'
+sql_host = 'localhost'
+db_name = 'user_db'
