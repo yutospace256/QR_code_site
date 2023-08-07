@@ -15,9 +15,9 @@
 
     <table>
         <tbody>
+        <caption style="margin:10px">Current Site Data: {{ site_number }}</caption><br>
           <tr>
             <th>Site Type</th>
-            <th>Site Number</th>
             <th>Points</th>
             <th>Title</th>
             <th>HP</th>
@@ -25,7 +25,6 @@
           </tr>
             <tr onclick="redirectToSiteModify('{{ current_site_data[2] }}')">
                 <td>{{ current_site_data["site_type"] }}</td>
-                <td>{{ current_site_data["site_number"] }}</td>
                 <td>{{ current_site_data["points"] }}</td>
                 <td>{{ current_site_data["title"] }}</td>
                 <td>{{ current_site_data["hp"] }}</td>
@@ -34,7 +33,7 @@
         </tbody>
     </table>
 
-    {% if current_choices_data %}
+    {% if current_site_data["site_type"] == 2 %}
         <table>
             <tbody>
             <caption style="margin:10px">Current Choices Data: {{ site_number }}</caption><br>
@@ -52,8 +51,9 @@
         </table>
     {% endif %}
 
-
-    <form name="column_form" method="POST" action="/dev_site_modify">
+    <b>Modify Base Site Data</b>
+    <form name="column_form" method="POST" action="/dev_site_modify?site={{ current_site_data["site_number"] }}">
+        <input type="hidden" name="form_type" value="columns">
         {% if current_site_data["site_type"] == 1 %}
             <fieldset>
                 <legend>Columns</legend>
@@ -89,5 +89,43 @@
         <br>
         <button type="submit">Submit</button>
     </form>
+
+    {% if current_site_data["site_type"] == 2 %}
+        <b>Modify Choices Data</b>
+        <form name="create_choices" method="POST" action="/dev_site_modify?site={{ current_site_data["site_number"] }}">
+            <input type="hidden" name="form_type" value="choices">
+            <fieldset>
+                <legend>Choices</legend>
+                <!-- Create CHOICE in a form of 100 characters or less. -->
+                <input type="radio" name="choice_value" value="0" id="choice_value_1" checked>
+                <label for="choice_value_1" class="choice">0: Correct</label>
+                <input type="radio" name="choice_value" value="X" id="choice_value_2">
+                <label for="choice_value_2" class="choice">X: Incorrect</label>
+            </fieldset>
+            <br>
+            <!-- Create CHOICE in a form of 100 characters or less. -->
+            <label for="choice_text" class="choice">Choice Text:</label>
+            <input type="text" id="choice_text" name="choice_text" class="text" maxlength="256">
+            <br>
+            <button type="submit">Add Choices</button>
+            <input type="hidden" name="progress" value="step2">
+            <input type="hidden" name="new_site_number" value="{{ new_site_number }}">
+        </form>    
+        <b>Delete Choice</b>
+        <form name="delete_choices" method="POST" action="/dev_site_modify?site={{ current_site_data["site_number"] }}">
+            <input type="hidden" name="form_type" value="delete">
+            <fieldset>
+                <legend>Choices</legend>
+                <!-- Create CHOICE in a form of 100 characters or less. -->
+                {% for loop_count in range(current_choices_data|length) %}
+                    <input type="radio" name="choice_count" value="{{ loop_count }}" id="choice_{{ loop_count }}">
+                    <label for="choice_{{ loop_count }}" class="choice">{{ current_choices_data[loop_count]["value"] }}: {{ current_choices_data[loop_count]["choice"] }}</label>
+                {% endfor %}
+            </fieldset>
+            <br>
+            <button type="submit">Delete Choices</button>
+        </form>
+    {% endif %}
+    <a href="{{ url_for('dev_create_site') }}"><button class="back">Back</button></a>
 </body>
 </html>

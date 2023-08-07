@@ -212,7 +212,7 @@
           </tbody>
         </table>
     {% elif progress == "step2" %}
-      <form name="create_choices" method="POST" action="/create_site">
+      <form name="create_choices" method="POST" action="/dev_create_site">
         <fieldset>
             <legend>Choices</legend>
             <!-- Create CHOICE in a form of 100 characters or less. -->
@@ -229,7 +229,7 @@
         <input type="hidden" name="progress" value="step2">
         <input type="hidden" name="new_site_number" value="{{ new_site_number }}">
       </form>    
-      <form name="completed_create_choices" method="POST" action="/create_site">
+      <form name="completed_create_choices" method="POST" action="/dev_create_site">
         <button type="submit">Choice Creation Completed</button>
         <input type="hidden" name="progress" value="completed">
         <input type="hidden" name="new_site_number" value="{{ new_site_number }}">

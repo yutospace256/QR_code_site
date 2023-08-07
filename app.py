@@ -247,31 +247,24 @@ def insert_site_data():
     cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
     cursor = cnx.cursor()
 
-    # Refer to the site_number column from the logs table and count how many have the same value
-    query = "SELECT site_number, COUNT(*) FROM logs GROUP BY site_number"
+    # Count occurrences of each site_number and non-zero points using a single query
+    query = """
+        SELECT site_number, COUNT(*) AS total_count, SUM(CASE WHEN points != 0 THEN 1 ELSE 0 END) AS correct_count
+        FROM logs GROUP BY site_number
+    """
     cursor.execute(query)
     site_data = cursor.fetchall()
-    
-    # Count the non-zeor number in the points column of the logs table by site_number column
-    query = "SELECT site_number, COUNT(*) FROM logs WHERE points != 0 GROUP BY site_number"
-    cursor.execute(query)
-    site_data_2 = cursor.fetchall()
 
-    # Assign the above site_data to the get_count column of the site_data table
+    # Update site_data table
+    update_query = "UPDATE site_data SET get_count = %s, correct_count = %s WHERE site_number = %s"
     for site in site_data:
-        update_query = "UPDATE site_data SET get_count = %s WHERE site_number = %s"
-        values = (site[1], site[0])
-        cursor.execute(update_query, values)
-    
-    # Difference of counts from site_data, site_data_2 by site_number
-    for site in site_data_2:
-        update_query = "UPDATE site_data SET correct_count = %s WHERE site_number = %s"
-        values = (site[1], site[0])
+        values = (site[1], site[2], site[0])
         cursor.execute(update_query, values)
     
     cnx.commit()
     cursor.close()
     cnx.close()
+
 
 def dev_create_site_data(site_type, points, title):
     cnx = mysql.connector.connect(user=dbconfig.user3, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)
@@ -320,6 +313,28 @@ def change_site_data(site_number, column, new_data):
         # Make the data in the column of site_number=site_number in the site_data table new_data
         change_query = "UPDATE site_data SET {} = %s WHERE site_number = %s".format(column)
         cursor.execute(change_query, (new_data, site_number, ))
+
+    cnx.commit()
+    cursor.close()
+    cnx.close()
+
+def delete_choices_data(site_number, choice_count):
+    cnx = mysql.connector.connect(user=dbconfig.user1, password=dbconfig.user_pass, host=dbconfig.sql_host, database=dbconfig.db_name)  
+    cursor = cnx.cursor()
+    choice_count = int(choice_count)
+    # Take data from site_data in the CHOICES column of site_number=site_number
+    query = "SELECT choices FROM site_data WHERE site_number = %s"
+    cursor.execute(query, (site_number, ))
+    choices = cursor.fetchone()[0]
+    # Convert the existing JSON value to a Python list
+    choices = json.loads(choices)
+    # Delete the selected choice from the list
+    del choices[choice_count]
+    # Convert the list to JSON
+    choices = json.dumps(choices)
+    # Make the data in the column of site_number=site_number in the site_data table choices
+    change_query = "UPDATE site_data SET choices = %s WHERE site_number = %s"
+    cursor.execute(change_query, (choices, site_number, ))
 
     cnx.commit()
     cursor.close()
@@ -443,7 +458,7 @@ def analyze_and_generate_graphs(user_count):
     pie_images = []
     for site_number, correct_count, incorrect_count in zip(site_numbers, correct_counts, incorrect_counts):
         if correct_count == 0 and incorrect_count == 0:
-            continue
+            pass
         else:
             # Conditional branching when the first character of site_number is 2
             if site_number[0] == '2':
@@ -725,7 +740,7 @@ def dev_ranking():
 @app.route("/show_user", methods=['GET', 'POST'])
 def show_user():
     user_data = show_user_data()
-    return render_template('.html', user_data=user_data)
+    return render_template('show_user.html', user_data=user_data)
 
 @app.route('/data_modify', methods=['GET', 'POST'])
 def data_modify():
@@ -751,14 +766,15 @@ def dev_create_site():
             site_type = request.form['site_type']
             title = request.form['title']
             points = request.form['points']
-            new_site_number = dev_create_site_data(site_type, points, title)
+            # new_site_number = dev_create_site_data(site_type, points, title)
+            new_site_number = "204"
             if site_type == "2":
                 question = request.form['question']
                 change_site_data(new_site_number, column="question", new_data=question)
                 progress = "step2"
             elif site_type == "3":
                 hp = request.form['hp']
-                change_site_data(new_site_number, column="hp", new_data=hp)
+                # change_site_data(new_site_number, column="hp", new_data=hp)
                 progress = "completed"
             else: 
                 progress = "completed"
@@ -797,12 +813,43 @@ def dev_create_site():
 def dev_site_modify():
     site_number = request.args.get('site')
     current_site_data = get_site_data(site_number)
-    if site_number[0] == "2":
-        choices_json = current_site_data["choices"]
-        current_choices_data = json.loads(choices_json)
-        return render_template("dev_site_modify.html", site_number=site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
+    choices_json = current_site_data["choices"]
+    current_choices_data = json.loads(choices_json)
+    if request.method == 'POST':
+        form_type = request.form['form_type']
+        if form_type == "columns":
+            column = request.form.get('columns')
+            new_data = request.form.get('text_input')
+            change_site_data(site_number, column=column, new_data=new_data)
+            current_site_data = get_site_data(site_number)
+            choices_json = current_site_data["choices"]
+            current_choices_data = json.loads(choices_json)
+            return render_template("dev_site_modify.html", site_number=site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
+        elif form_type == "choices":
+            choice_value = request.form.getlist('choice_value')
+            choice_text = request.form.getlist('choice_text')
+            # Make a dictionary of choice_value and choice_text and a list of them as choices_data.
+                
+            combined_dict = {'value': choice_value[0], 'choice': choice_text[0]}
+            change_site_data(site_number, column="choices", new_data=combined_dict)
 
-    return render_template("dev_site_modify.html", site_number=site_number, current_site_data=current_site_data)
+            current_site_data = get_site_data(site_number)
+            choices_json = current_site_data["choices"]
+            current_choices_data = json.loads(choices_json)
+            return render_template("dev_site_modify.html", site_number=site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
+        elif form_type == "delete":
+            choice_count = request.form.get('choice_count')
+            delete_choices_data(site_number, choice_count)
+            
+            # Update current_choices_data after deleting the choice
+            current_site_data = get_site_data(site_number)
+            choices_json = current_site_data["choices"]
+            current_choices_data = json.loads(choices_json)
+
+            return render_template("dev_site_modify.html", site_number=site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
+
+   
+    return render_template("dev_site_modify.html", site_number=site_number, current_site_data=current_site_data, current_choices_data=current_choices_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
